@@ -1,6 +1,4 @@
-#include "esp_common.h"
-#include "freertos/task.h"
-#include "gpio.h"
+#include "header.h"
 
 /******************************************************************************
  * FunctionName : user_rf_cal_sector_set
@@ -45,6 +43,8 @@ uint32 user_rf_cal_sector_set(void)
     return rf_cal_sec;
 }
 
+rtc_time_t time;
+
 void task_blink(void* ignore)
 {
     // Set GPIO2 as output
@@ -60,6 +60,21 @@ void task_blink(void* ignore)
     vTaskDelete(NULL);
 }
 
+void vUartLog(void *pvParameters)
+{
+    char *str = (char *)pvParameters;
+
+    while (1) {
+        if (str != NULL) {
+            os_printf("[%d.%02d] LOGGER: %s\n", time.epoch_sec, time.centisec, str);
+        } else {
+            os_printf("[%d.%02d] LOGGER: (null)\n", time.epoch_sec, time.centisec);
+        }
+        vTaskDelay(500 / portTICK_RATE_MS); // Log every 10.5 second
+    }
+    vTaskDelete(NULL);
+}
+
 /******************************************************************************
  * FunctionName : user_init
  * Description  : entry of user application, init user function here
@@ -68,5 +83,11 @@ void task_blink(void* ignore)
 *******************************************************************************/
 void user_init(void)
 {
+    time.epoch_sec = 1754236424; // Set initial epoch seconds
+    time.centisec = 0;
+    static char logMsg[] = "Hello from UART!";
+    xTaskHandle xUartHandle;
     xTaskCreate(&task_blink, "startup", 2048, NULL, 1, NULL);
+    xTaskCreate(&vUartLog, "UartLog", 128, logMsg, tskIDLE_PRIORITY, &xUartHandle);
+    xTaskCreate(&vRtcTask, "RTC", 128, NULL, tskIDLE_PRIORITY + 1, NULL); // Higher priority
 }
