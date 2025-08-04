@@ -48,9 +48,11 @@ void task_blink(void* ignore){
 
     while(true) {
         GPIO_OUTPUT_SET(2, 0); // Set GPIO2 low
-        vTaskDelay(1000/portTICK_RATE_MS);
+        vTaskDelay(500/portTICK_RATE_MS);
+        UartLog("SET LED on GPIO2");
         GPIO_OUTPUT_SET(2, 1); // Set GPIO2 high
-        vTaskDelay(1000/portTICK_RATE_MS);
+        vTaskDelay(500/portTICK_RATE_MS);
+        UartLog("RESET LED on GPIO2");
     }
 
     vTaskDelete(NULL);
