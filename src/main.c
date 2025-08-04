@@ -85,9 +85,10 @@ void user_init(void)
 {
     time.epoch_sec = 1754236424; // Set initial epoch seconds
     time.centisec = 0;
+    void (*delayFunc)(portTickType) = vTaskDelay;
     static char logMsg[] = "Hello from UART!";
     xTaskHandle xUartHandle;
     xTaskCreate(&task_blink, "startup", 2048, NULL, 1, NULL);
     xTaskCreate(&vUartLog, "UartLog", 128, logMsg, tskIDLE_PRIORITY, &xUartHandle);
-    xTaskCreate(&vRtcTask, "RTC", 128, NULL, tskIDLE_PRIORITY + 1, NULL); // Higher priority
+    xTaskCreate(&vRtcTask, "RTC", 128, delayFunc, tskIDLE_PRIORITY + 1, NULL); // Higher priority
 }
