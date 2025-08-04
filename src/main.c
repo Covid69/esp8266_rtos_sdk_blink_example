@@ -12,8 +12,7 @@
  * Parameters   : none
  * Returns      : rf cal sector
 *******************************************************************************/
-uint32 user_rf_cal_sector_set(void)
-{
+uint32 user_rf_cal_sector_set(void){
     flash_size_map size_map = system_get_flash_size_map();
     uint32 rf_cal_sec = 0;
     switch (size_map) {
@@ -45,10 +44,7 @@ uint32 user_rf_cal_sector_set(void)
 
 rtc_time_t time;
 
-void task_blink(void* ignore)
-{
-    // Set GPIO2 as output
-    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
+void task_blink(void* ignore){
 
     while(true) {
         GPIO_OUTPUT_SET(2, 0); // Set GPIO2 low
@@ -60,34 +56,38 @@ void task_blink(void* ignore)
     vTaskDelete(NULL);
 }
 
-void vUartLog(void *pvParameters)
-{
-    char *str = (char *)pvParameters;
-
-    while (1) {
-        if (str != NULL) {
-            os_printf("[%d.%02d] LOGGER: %s\n", time.epoch_sec, time.centisec, str);
-        } else {
-            os_printf("[%d.%02d] LOGGER: (null)\n", time.epoch_sec, time.centisec);
-        }
-        vTaskDelay(500 / portTICK_RATE_MS); // Log every 10.5 second
-    }
-    vTaskDelete(NULL);
-}
-
 /******************************************************************************
  * FunctionName : user_init
  * Description  : entry of user application, init user function here
  * Parameters   : none
  * Returns      : none
 *******************************************************************************/
-void user_init(void)
-{
-    time.epoch_sec = 1754236424; // Set initial epoch seconds
-    time.centisec = 0;
+void user_init(void){
+    startup_cfg();
+
     static char logMsg[] = "Hello from UART!";
     xTaskHandle xUartHandle;
     xTaskCreate(&task_blink, "startup", 2048, NULL, 1, NULL);
-    xTaskCreate(&vUartLog, "UartLog", 128, logMsg, tskIDLE_PRIORITY, &xUartHandle);
+    // xTaskCreate(&UartLog, "UartLog", 128, logMsg, tskIDLE_PRIORITY, &xUartHandle);
     xTaskCreate(&vRtcTask, "RTC", 128, &vTaskDelay, tskIDLE_PRIORITY + 1, NULL); // Higher priority
+}
+
+uint8_t startup_cfg(){
+    // Initialize epoch_sec and centisec
+    // Set initial time to a specific epoch (e.g., 1754236424 corresponds
+    time.epoch_sec = 1754236424; // Set initial epoch seconds
+    time.centisec = 0;
+
+    UartLog("Starting ESP8266");
+    // Set GPIO2 as output
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
+
+    // Initialize ultrasound sensor
+    if (ultrasound_init() != 0) {     
+        UartLog("Ultrasound initialization failed!\n");
+        return 1; // Return error code
+    }
+    else {
+        UartLog("Ultrasound sensor initialized successfully!\n");
+    }
 }
