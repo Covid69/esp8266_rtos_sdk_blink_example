@@ -45,14 +45,13 @@ uint32 user_rf_cal_sector_set(void){
 rtc_time_t time;
 
 void task_blink(void* ignore){
-
+    char msg[64];
     while(true) {
-        GPIO_OUTPUT_SET(2, 0); // Set GPIO2 low
+        float dis;
+        dis = ultrasound_read_distance();
+        sprintf(msg, "Distance: %.2f cm\n", dis);
+        UartLog(msg);
         vTaskDelay(500/portTICK_RATE_MS);
-        UartLog("SET LED on GPIO2");
-        GPIO_OUTPUT_SET(2, 1); // Set GPIO2 high
-        vTaskDelay(500/portTICK_RATE_MS);
-        UartLog("RESET LED on GPIO2");
     }
 
     vTaskDelete(NULL);
